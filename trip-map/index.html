@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#153b35" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org; connect-src 'self' https://tiles.openfreemap.org; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+    <meta name="description" content="یک نمایشگر ساده و خصوصی برای نقشه سفر" />
+    <title>نقشه سفر</title>
+    <link rel="stylesheet" href="./vendor/maplibre/maplibre-gl.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260811-3" />
+  </head>
+  <body>
+    <a class="skip-link" href="#map">رفتن به نقشه</a>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="title-block">
+          <p class="eyebrow">نقشه سفر</p>
+          <h1 id="trip-title">برنامه‌ریز سفر</h1>
+          <p id="trip-dates" class="trip-dates" hidden></p>
+        </div>
+
+        <div class="header-actions">
+          <button id="share-button" class="header-action" type="button" aria-label="اشتراک سفر" hidden>
+            <span aria-hidden="true">↗</span>
+            <span>اشتراک سفر</span>
+          </button>
+          <button id="hotel-button" class="header-action" type="button" aria-label="نمایش هتل" hidden>
+            <span aria-hidden="true">⌂</span>
+            <span>هتل</span>
+          </button>
+        </div>
+      </header>
+
+      <nav id="view-tabs" class="view-tabs" role="tablist" aria-label="نمای سفر" hidden>
+        <button class="view-tab is-active" type="button" role="tab" data-view="map" aria-selected="true">نقشه</button>
+        <button class="view-tab" type="button" role="tab" data-view="days" aria-selected="false">برنامه روزها</button>
+      </nav>
+
+      <nav id="filter-bar" class="filter-bar" aria-label="فیلتر مکان‌ها" hidden>
+        <button class="filter-chip is-active" type="button" data-filter="all" aria-pressed="true">همه</button>
+        <button class="filter-chip" type="button" data-filter="important" aria-pressed="false">مهم</button>
+        <button class="filter-chip" type="button" data-filter="free" aria-pressed="false">رایگان</button>
+        <button class="filter-chip" type="button" data-filter="booking" aria-pressed="false">نیاز به رزرو</button>
+        <button class="filter-chip" type="button" data-filter="child" aria-pressed="false">مناسب کودک</button>
+        <button class="filter-chip" type="button" data-filter="evening" aria-pressed="false">شبانه</button>
+        <button class="filter-chip" type="button" data-filter="near-hotel" aria-pressed="false">نزدیک هتل</button>
+      </nav>
+
+      <main id="map-stage" class="map-stage">
+        <div id="map" aria-label="نقشه تعاملی سفر"></div>
+
+        <section id="state-panel" class="state-panel" aria-live="polite">
+          <div class="state-icon" aria-hidden="true">⌖</div>
+          <h2 id="state-title">هیچ سفری بارگذاری نشده است.</h2>
+          <p id="state-message">برای دیدن سفر، لینک کامل اشتراک‌گذاری‌شده را باز کنید.</p>
+          <p class="privacy-note">اطلاعات سفر فقط از بخش خصوصی لینک و در همین دستگاه خوانده می‌شود.</p>
+        </section>
+
+        <div id="map-action-stack" class="map-action-stack" hidden>
+          <button id="location-button" class="map-action" type="button">
+            <span aria-hidden="true">◎</span>
+            <span>موقعیت من</span>
+          </button>
+          <button id="fit-button" class="map-action" type="button">
+            <span aria-hidden="true">⌖</span>
+            <span>نمایش همه</span>
+          </button>
+        </div>
+
+        <section id="day-map-banner" class="day-map-banner" aria-live="polite" hidden>
+          <div>
+            <span class="day-map-label">روز انتخاب‌شده</span>
+            <strong id="day-map-title"></strong>
+          </div>
+          <button id="clear-day-button" type="button">همه روزها</button>
+        </section>
+
+        <p id="result-status" class="sr-only" aria-live="polite"></p>
+      </main>
+
+      <main id="days-stage" class="days-stage" hidden>
+        <section class="days-toolbar" aria-labelledby="days-heading">
+          <div>
+            <p class="section-kicker">برنامه‌ریزی محلی</p>
+            <h2 id="days-heading">روزهای سفر</h2>
+            <p>تغییرها فقط در همین صفحه می‌مانند و جایی ارسال نمی‌شوند.</p>
+          </div>
+          <div class="days-actions">
+            <button id="copy-link-button" class="secondary-action" type="button">کپی لینک تازه</button>
+            <button id="show-day-map-button" class="secondary-action" type="button">نمایش روز روی نقشه</button>
+          </div>
+        </section>
+
+        <nav id="day-tabs" class="day-tabs" role="tablist" aria-label="انتخاب روز سفر"></nav>
+
+        <section class="day-plan" aria-labelledby="day-plan-title">
+          <div class="day-plan-heading">
+            <div>
+              <p class="section-kicker">تخصیص مکان‌ها</p>
+              <h2 id="day-plan-title">برنامه روز</h2>
+            </div>
+            <span id="day-place-count" class="count-badge"></span>
+          </div>
+          <div id="day-place-list" class="day-place-list"></div>
+        </section>
+
+        <section id="clusters-section" class="clusters-section" aria-labelledby="clusters-heading" hidden>
+          <div class="day-plan-heading">
+            <div>
+              <p class="section-kicker">پیشنهاد مسیر</p>
+              <h2 id="clusters-heading">مکان‌های نزدیک به هم</h2>
+            </div>
+          </div>
+          <div id="cluster-list" class="cluster-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <button id="sheet-backdrop" class="sheet-backdrop" type="button" aria-label="بستن جزئیات" hidden></button>
+    <aside id="detail-sheet" class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true" hidden>
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <button id="sheet-close" class="sheet-close" type="button" aria-label="بستن">×</button>
+      <div id="detail-content" class="detail-content"></div>
+    </aside>
+
+    <p id="share-status" class="share-status" role="status" aria-live="polite" hidden></p>
+
+    <noscript>
+      <p class="noscript-message">برای نمایش نقشه، جاوااسکریپت باید فعال باشد.</p>
+    </noscript>
+
+    <script src="./vendor/maplibre/maplibre-gl.js"></script>
+    <script src="./app.js?v=20260811-5"></script>
+  </body>
+</html>
